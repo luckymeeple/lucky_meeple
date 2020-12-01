@@ -230,7 +230,7 @@ const addWinner = async(raffle_id, winner) => {
 
 };
 
-const showHeader = (raffle) => {
+const showHeader = (raffle, totalTickets) => {
 
     let started = moment(raffle.starts).format("D/MMM");
 
@@ -246,7 +246,7 @@ const showHeader = (raffle) => {
     );
 
     console.log('-');
-    console.log(`Este sorteio começou a ${chalk.green(started)} e terminou com ${chalk.green(raffle.games.length + " jogos")} desbloqueados.`);
+    console.log(`Este sorteio começou a ${chalk.green(started)} e terminou com ${chalk.green(totalTickets + " rifas")} e ${chalk.green(raffle.games.length + " jogos")} desbloqueados.`);
     console.log('-');
     console.log();
 
@@ -297,7 +297,7 @@ const drawResults = async (raffle) => {
 
         let tickets = await getTickets();
         let totalTickets = await getTotalTicketsPerBuyer();
-        let games = shuffle(raffle.games);
+        let games = raffle.games;
 
         if(tickets && tickets.length) {
 
@@ -331,7 +331,7 @@ const drawResults = async (raffle) => {
                 readlineSync.question("Parabéns ao vencedor! :) Continuamos? ");
             }
 
-            showHeader(raffle);
+            showHeader(raffle, tickets.length);
             console.log('Parabéns aos vencedores e obrigado a todos por participarem! Em breve receberão um e-mail com o resultado deste sorteio.');
             console.table(table);
 
