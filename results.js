@@ -7,6 +7,34 @@ const figlet = require("figlet");
 const moment = require('moment');
 const readlineSync = require('readline-sync');
 
+const blacklist = [
+    'F566E4',
+    '305E5E',
+    'AF6C33',
+    '476166',
+    'E2E40E',
+    'C3C350',
+    '27B0DE',
+    '363450',
+    '081695',
+    'CC05CC',
+    '2AAB61',
+    'C2D98D',
+    '5538CF',
+    'DB8EA0',
+    'B31339',
+    'E28C1A',
+    '61824F',
+    'D3DA4A',
+    'D665B9',
+    'C4F3E1',
+    '8BCF26',
+    '24A99B',
+    '7C347E',
+    '4B927D',
+    '48111B',
+    '180624'
+];
 
 const shuffle = a => {
     for (let i = a.length - 1; i > 0; i--) {
@@ -181,11 +209,17 @@ const getTickets = async () => {
 
         let ticketsWithUser = await client.db("luckymeeple").collection("raffles").aggregate(ticketsWithUserQuery).toArray();
 
+
         client.close();
 
-        if(ticketsWithUser) {
-            let tickets = shuffle(ticketsWithUser[0].tickets);
-            return tickets;
+        if(ticketsWithUser && ticketsWithUser.length) {
+            let tickets = ticketsWithUser[0].tickets;
+
+            if(blacklist.length) {
+                tickets = tickets.filter(t => blacklist.indexOf(t.ticket) === -1);
+            }
+
+            return shuffle(tickets);
         }
         
         return false;
@@ -197,11 +231,8 @@ const getTickets = async () => {
 
 };
 
-const getWinner = (players)  => {
-    let idx = getRandomPosition(players.length-1);
-    let result = players[idx];
-
-    return result;
+const getWinner = (tickets)  => {
+    return getRandomPosition(tickets.length-1);
 };
 
 const addWinner = async(raffle_id, winner) => {
@@ -232,9 +263,6 @@ const addWinner = async(raffle_id, winner) => {
 
 const showHeader = (raffle, totalTickets) => {
 
-    let started = moment(raffle.starts).format("D/MMM");
-    
-    
     console.clear();
     console.log(
         chalk.yellow(
@@ -246,6 +274,24 @@ const showHeader = (raffle, totalTickets) => {
         )
     );
 
+    // do we have tickets?
+    if (!totalTickets) {
+        console.log('-');
+        console.log('Cedo demais para o sorteio...não temos rifas ainda :)');
+        console.log('-');
+        process.exit(1);	
+    }
+
+    // do we have tickets?
+    if (!raffle.games || !raffle.games.length) {
+        console.log('-');
+        console.log('Cedo demais para o sorteio...não temos jogos ainda :)');
+        console.log('-');
+        process.exit(1);
+    }
+
+    let started = moment(raffle.starts).format("D/MMM");
+    
     console.log('-');
     console.log(`Este sorteio começou a ${chalk.green(started)} e terminou com ${chalk.green(totalTickets + " rifas")} compradas e ${chalk.green(raffle.games.length + " jogos")} desbloqueados.`);
     console.log('-');
@@ -297,17 +343,19 @@ const init = async() => {
 const drawResults = async (raffle) => {
     try {
 
-        let tickets = await getTickets();
+        let tickets = shuffle(await getTickets());
         let totalTickets = await getTotalTicketsPerBuyer();
         let games = raffle.games;
 
         if(tickets && tickets.length) {
 
             let table = [];
+            let numTickets = tickets.length;
 
             for(let i=0;i<=games.length-1;++i) {
 
-                let winner = getWinner(shuffle(tickets));
+                let winner = tickets.splice(getWinner(tickets), 1)[0];
+
                 let winning_ticket = {
                     'ticket': winner.ticket,
                     'total_bought': totalTickets[winner.email],
@@ -327,13 +375,13 @@ const drawResults = async (raffle) => {
                 
                 table.push([games[i].name, games[i].link, winner.ticket]);
 
-                showHeader(raffle, tickets.length);
+                showHeader(raffle, numTickets);
                 console.table([[games[i].name, games[i].link, winner.ticket]]);
 
                 readlineSync.question("Parabéns ao vencedor! :) Continuamos? ");
             }
 
-            showHeader(raffle, tickets.length);
+            showHeader(raffle, numTickets);
             console.log('Parabéns aos vencedores e obrigado a todos por participarem! Em breve receberão um e-mail com o resultado deste sorteio.');
             console.table(table);
 
