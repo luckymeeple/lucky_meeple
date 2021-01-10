@@ -7,34 +7,7 @@ const figlet = require("figlet");
 const moment = require('moment');
 const readlineSync = require('readline-sync');
 
-const blacklist = [
-    'F566E4',
-    '305E5E',
-    'AF6C33',
-    '476166',
-    'E2E40E',
-    'C3C350',
-    '27B0DE',
-    '363450',
-    '081695',
-    'CC05CC',
-    '2AAB61',
-    'C2D98D',
-    '5538CF',
-    'DB8EA0',
-    'B31339',
-    'E28C1A',
-    '61824F',
-    'D3DA4A',
-    'D665B9',
-    'C4F3E1',
-    '8BCF26',
-    '24A99B',
-    '7C347E',
-    '4B927D',
-    '48111B',
-    '180624'
-];
+const blacklist = [];
 
 const shuffle = a => {
     for (let i = a.length - 1; i > 0; i--) {
